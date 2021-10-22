@@ -4,13 +4,13 @@
 using namespace std;
 
 int main() {
-    int n;
-    cin >> n;
-    int size = n;
+    int tt;
+    cin >> tt;
+    int size = tt;
     int input;
     int find_even = 0;
     vector<int> numbers;
-    while (n--) {
+    while (tt--) {
         cin >> input;
         numbers.push_back(input);
         find_even += input % 2;
