@@ -1,0 +1,162 @@
+from collections import defaultdict as dd
+from collections import deque
+import bisect
+import heapq
+import time
+
+def ri():
+    return int(input())
+
+def rl():
+    return list(map(int, input().split()))
+
+
+# "special"-ish case - including a 0 always succeeds
+# for other cases, can assume no 0's.
+
+# product includes 2,3,5,7 at most as prime factors
+# sum at most 9 * 12 = 108
+# at most 18 digits to use in sum
+# Idea: iterate over sum. Use dp with hopefully limited state-space
+# dp[s][p][flags] = number of ways to use x digits (we loop through x) so that
+#   - s = sum so far
+#   - p = gcd(product, digitsum)
+#   - flags take care of whether we are above, below, or tied with a
+
+
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+def reduce(n):
+    a = n
+    for b in [pow(2, 12*3), pow(3, 12*2), pow(5, 12), pow(7, 12)]:
+        a = gcd(a, b)
+    return a
+
+def interesting2(x,N):
+    # if x < 10:
+        # return x
+    s = str(x)
+    n = len(s)
+    dp = dd(int)
+
+    # N = pow(2, 12*3) * pow(3, 12*2) * pow(5, 12) * pow(7, 12)
+    # first digit
+    dp[(0,-1,0)] = 1
+    for d in range(1, 10):
+        if d < int(s[0]):
+            dp[(d, d, 0)] = 1
+        elif d == int(s[0]):
+            dp[(d,d,1)] = 1
+
+    for i in range(1, n):
+        new_dp = dd(int)
+        for k, v in dp.items():
+            old_s, old_p, old_flag = k
+            for d in range(10):
+                new_s = old_s + d
+                if old_p == -1 and d == 0:
+                    new_p = -1
+                elif old_p == -1:
+                    new_p = d
+                elif d == 0:
+                    new_p = 0
+                elif old_p == 0:
+                    new_p = 0
+                else:
+                    new_p = gcd(old_p * d, N)
+                if old_flag == 0:
+                    new_flag = 0
+                elif old_flag == 2:
+                    new_flag = 2
+                else:
+                    if d < int(s[i]):
+                        new_flag = 0
+                    elif d == int(s[i]):
+                        new_flag = 1
+                    else:
+                        new_flag = 2
+                remain = n - i - 1
+                if new_flag != 2 and new_s <= N and new_s + 9 * remain >= N and new_p != 0:
+                   new_dp[(new_s, new_p, new_flag)] += v
+        dp = new_dp
+        # for k, v in dp.items():
+            # print (k, v)
+        # print ()
+    ans = 0
+    for k, v in dp.items():
+        s, p, flag = k
+        if s == N and p > -1 and p % s == 0:
+            ans += v
+    return ans
+
+# Python3 program to count number from 1 to n
+# with 0 as a digit.
+# https://www.geeksforgeeks.org/count-numbers-having-0-as-a-digit/
+
+# Returns count of integers having zero
+# upto given digits
+def zeroUpto(digits):
+    first = (pow(10, digits) - 1) // 9
+    second = (pow(9, digits) - 1) // 8
+    return 9 * (first - second);
+
+# counts numbers having zero as digits
+# upto a given number 'num'
+def countZero(num):
+    num = str(num)
+    k = len(num);
+    total = zeroUpto(k - 1);
+    non_zero = 0;
+    for i in range(k):
+        if (num[i] == '0'):
+            non_zero -= 1;
+            break;
+        non_zero += (((ord(num[i]) - ord('0')) - 1) *
+                                (pow(9, k - 1 - i)));
+
+    no = 0;
+    remaining = 0;
+    calculatedUpto = 0;
+    for i in range(len(num)):
+        no = no * 10 + (ord(num[i]) - ord('0'));
+        if (i != 0):
+            calculatedUpto = calculatedUpto * 10 + 9;
+
+    remaining = no - calculatedUpto;
+    ans = zeroUpto(k - 1) + (remaining - non_zero - 1);
+    return ans;
+
+bad_primes = [11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
+        61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113]
+good = [1] * 110
+for p in bad_primes:
+    for q in range(p, 110, p):
+        good[q] = 0
+
+use = []
+for p in range(1, 110):
+    if good[p]:
+        use.append(p)
+
+def interesting(a):
+    ans = 0
+    for N in use:
+        ans += interesting2(a, N)
+    return ans + countZero(a)
+
+def solve():
+    a, b = rl()
+    print (interesting(b) - interesting(a - 1))
+
+
+
+
+# start = time.time()
+t = ri()
+for i in range(1, t + 1):
+    print ("Case #{}:".format(i), end = " ")
+    solve()
+# print (time.time() - start)
